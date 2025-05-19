@@ -29,6 +29,8 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           ssh -o StrictHostKeyChecking=no dockeruser@${{ secrets.EC2_HOST }} "
+            unset DOCKER_TLS_VERIFY &&
+            unset DOCKER_CERT_PATH &&
             cd /home/dockeruser/deploy &&
             docker-compose up -d --build
           "
