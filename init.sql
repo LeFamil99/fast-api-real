@@ -1,0 +1,12 @@
+CREATE DATABASE IF NOT EXISTS testdb;
+
+\c testdb;
+
+CREATE USER adminn WITH PASSWORD 'adminn';
+
+GRANT ALL PRIVILEGES ON DATABASE testdb TO adminn;
+
+CREATE TABLE IF NOT EXISTS items (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255)
+);
