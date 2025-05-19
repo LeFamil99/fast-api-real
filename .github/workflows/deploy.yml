@@ -1,0 +1,34 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Configure SSH key
+        uses: webfactory/ssh-agent@v0.7.0
+        with: 
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Install SSH and rsync
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync openssh-client
+
+      - name: Copy files to EC2
+        run: rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/deploy
+
+      - name: Deploy with Docker Compose
+        run: |
+          ssh -o StrictHostKeyChecking=no dockeruser@${{ secrets.EC2_HOST }} "
+            cd /home/dockeruser/deploy &&
+            docker-compose up -d --build
+          "
