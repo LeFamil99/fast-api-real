@@ -20,7 +20,7 @@ jobs:
 
       - name: Install SSH and rsync
         run: |
-          sudo apt-get update
+          sudo apt-get updat
           sudo apt-get install -y rsync openssh-client
 
       - name: Copy files to EC2
@@ -32,3 +32,29 @@ jobs:
             cd /home/dockeruser/deploy &&
             docker compose up -d --build
           "
+          
+  slack-notification:
+    needs: deploy
+    if: failure()
+    runs-on: ubuntu:latest
+    steps:
+      - name: Get Run details
+        id: run_details
+        run: |
+          echo "RUN_ID=${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
+          echo "RUN_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+          echo "REPOSITORY=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+      - name: Send Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_COLOR: 'danger'  # Optional: Set color to red for failures
+          SLACK_TITLE: 'GitHub Actions Failure!'
+          SLACK_MESSAGE: |
+            The CI/CD pipeline failed.  See details below:
+            *Repository:* ${{ steps.workflow_details.outputs.REPOSITORY }}
+            *Workflow Run ID:* ${{ steps.workflow_details.outputs.RUN_ID }}
+            *Workflow Run Number:* ${{ steps.workflow_details.outputs.RUN_NUMBER }}
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.workflow_details.outputs.RUN_ID }}|View Run>
+          SLACK_USERNAME: Github Actions
+          SLACK_ICON_EMOJI: ':github:'
