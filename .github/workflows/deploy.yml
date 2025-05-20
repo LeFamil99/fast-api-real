@@ -52,9 +52,9 @@ jobs:
           SLACK_TITLE: 'GitHub Actions Failure!'
           SLACK_MESSAGE: |
             The CI/CD pipeline failed.  See details below:
-            *Repository:* ${{ steps.workflow_details.outputs.REPOSITORY }}
-            *Workflow Run ID:* ${{ steps.workflow_details.outputs.RUN_ID }}
-            *Workflow Run Number:* ${{ steps.workflow_details.outputs.RUN_NUMBER }}
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.workflow_details.outputs.RUN_ID }}|View Run>
+            *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
+            *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
+            *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
+            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.run_details.outputs.RUN_ID }}|View Run>
           SLACK_USERNAME: Github Actions
           SLACK_ICON_EMOJI: ':github:'
