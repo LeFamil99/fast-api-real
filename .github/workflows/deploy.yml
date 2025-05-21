@@ -127,7 +127,7 @@ jobs:
 
   slack-notification-health-failure:
     needs: healthcheck
-    if: needs.build-and-deploy.outputs.rollback == 'true'
+    if: needs.healthcheck.outputs.rollback == 'true'
     runs-on: ubuntu-latest
 
     steps:
