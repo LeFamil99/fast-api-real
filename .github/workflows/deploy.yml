@@ -43,6 +43,8 @@ jobs:
 
       - name: Deploy with Docker Compose via SSH
         uses: appleboy/ssh-action@v1.0.0
+        env:
+          TAG: ${{ github.sha }}
         with:
           username: dockeruser
           host: ${{ secrets.EC2_HOST }}
