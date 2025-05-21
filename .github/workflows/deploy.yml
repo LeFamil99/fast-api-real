@@ -91,7 +91,7 @@ jobs:
               
               echo "$TAG" > current_tag.txt
               echo "rollback_done='true'" > /home/dockeruser/rollback_status.txt
-              echo "rollback_tag=$TAG" > /home/dockeruser/rollback_status.txt
+              echo "rollback_tag=$TAG" >> /home/dockeruser/rollback_status.txt
             else
               echo "No previous tag available"
               echo "rollback_done='false'" > /home/dockeruser/rollback_status.txt
