@@ -142,12 +142,12 @@ jobs:
       uses: rtCamp/action-slack-notify@v2
       env:
         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-        SLACK_COLOR: 'warn'
+        SLACK_COLOR: 'warning'
         SLACK_TITLE: 'Deployment healthcheck failure, rollback done'
         SLACK_MESSAGE: |
           The healthcheck on deployed version was not successful.  See details below:
-          *Current image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKER_HOST }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.rollback_tag }}|View Docker image>
-          *Invalid image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKER_HOST }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.current_tag }}|View Docker image>
+          *Current image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKERHUB_USERNAME }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.rollback_tag }}|${{ needs.healthcheck.outputs.rollback_tag }}>
+          *Invalid image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKERHUB_USERNAME }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.current_tag }}|${{ needs.healthcheck.outputs.current_tag }}>
           *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
           *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
           *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
