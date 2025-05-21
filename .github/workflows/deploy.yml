@@ -8,6 +8,8 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.sha }}
     
     steps:
       - name: Checkout code
@@ -23,8 +25,6 @@ jobs:
         run: |
           docker compose build
           docker compose push
-        env:
-          TAG: ${{ github.sha }}
 
       - name: Install rsync
         run: |
@@ -47,9 +47,14 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            export TAG=${{ github.sha }}
-            cd /home/dockeruser/deploy &&
-            docker compose pull &&
+            cd /home/dockeruser/deploy
+            if [ -f current_tag.txt ]; then
+              cp current_tag.txt previous_tag.txt
+            fi
+            echo "${TAG}" > current_tag.txt
+            
+            export TAG=${{ TAG }}
+            docker compose pull
             docker compose up -d
           
   slack-notification:
