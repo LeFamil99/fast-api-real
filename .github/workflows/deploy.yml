@@ -94,18 +94,16 @@ jobs:
               echo "rollback_tag=$TAG" > /home/dockeruser/rollback_status.txt
             else
               echo "No previous tag available"
+              echo "rollback_done=false" > rollback_status.txt
+              echo "rollback_tag=not_found" >> rollback_status.txt
               exit 1
             fi
           fi
 
     - name: Download rollback status file
-      uses: appleboy/scp-action@v0.1.7
-      with:
-          host: ${{ secrets.EC2_HOST }}
-          username: dockeruser
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "/home/dockeruser/rollback_status.txt"
-          target: "rollback_status.txt"
+      run: |
+          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} \
+            dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/deploy/rollback_status.txt .
 
     - name: Set rollback status
       id: rollback-status
