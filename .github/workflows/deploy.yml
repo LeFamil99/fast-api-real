@@ -5,11 +5,12 @@ on:
     branches:
       - main
 
+env:
+  TAG: ${{ github.sha }}
+  
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      TAG: ${{ github.sha }}
     
     steps:
       - name: Checkout code
