@@ -61,7 +61,7 @@ jobs:
 
   healthcheck:
     needs: deploy
-    runs-on: ubuntu:latest
+    runs-on: ubuntu-latest
 
     steps:
     - name: Healthcheck and rollback on failure
