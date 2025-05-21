@@ -63,13 +63,12 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     outputs:
-      rollback: ${{ steps.healthcheck.outputs.rollback_done }}
-      rollback_tag: ${{ steps.healthcheck.outputs.rollback_tag }}
+      rollback: ${{ steps.rollback-status.outputs.rollback_done }}
+      rollback_tag: ${{ steps.rollback-status.outputs.rollback_tag }}
       current_tag: ${{ github.sha }}
 
     steps:
     - name: Healthcheck and rollback on failure
-      id: healthcheck
       uses: appleboy/ssh-action@v1.0.0
       with:
         username: dockeruser
@@ -80,21 +79,52 @@ jobs:
 
           if curl -sf http://localhost:8000/healt; then
             echo "Healthcheck passed"
+            echo "rollback_done=false" > /home/dockeruser/rollback_status.txt
           else
             echo "Healthcheck failed - starting rollback"
             if [ -f previous_tag.txt ]; then
               export TAG=$(cat previous_tag.txt)
               echo "Rolling back to tag $TAG"
+              
               docker compose pull
               docker compose up -d --remove-orphans
+              
               echo "$TAG" > current_tag.txt
-              echo "rollback_done=true" >> $GITHUB_ENV
-              echo "rollback_tag=$TAG" >> $GITHUB_ENV
+              echo "rollback_done=true" > /home/dockeruser/rollback_status.txt
+              echo "rollback_tag=$TAG" > /home/dockeruser/rollback_status.txt
             else
               echo "No previous tag available"
               exit 1
             fi
           fi
+
+    - name: Download rollback status file
+      uses: appleboy/scp-action@0.1.7
+      with:
+          host: ${{ secrets.EC2_HOST }}
+          username: dockeruser
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: /home/dockeruser/rollback_status.txt
+          target: ./rollback_status.txt
+
+    - name: Set rollback status
+      id: rollback-status
+      run: |
+          if [ -f ./rollback_status.txt ]; then
+            rollback_done=$(grep -E '^rollback_done=' ./rollback_status.txt | cut -d'=' -f2)
+            rollback_tag=$(grep -E '^rollback_tag=' ./rollback_status.txt | cut -d'=' -f2)
+            
+            echo "Rollback done: $rollback_done"
+            echo "Rollback tag: $rollback_tag"
+            
+            echo "rollback_done=$rollback_done" >> $GITHUB_ENV
+            echo "rollback_tag=$rollback_tag" >> $GITHUB_ENV
+          else
+            echo "Rollback status file not found."
+            exit 1
+          fi
+        
+        
 
   slack-notification-health-failure:
     needs: healthcheck
