@@ -77,7 +77,7 @@ jobs:
         script: |
           cd /home/dockeruser/deploy
 
-          if curl -sf http://localhost:8000/healt; then
+          if curl -sf http://localhost:8000/health; then
             echo "Healthcheck passed"
             echo "rollback_done=false" > /home/dockeruser/rollback_status.txt
           else
