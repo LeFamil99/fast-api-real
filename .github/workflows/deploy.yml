@@ -94,8 +94,8 @@ jobs:
               echo "rollback_tag=$TAG" > /home/dockeruser/rollback_status.txt
             else
               echo "No previous tag available"
-              echo "rollback_done=false" > rollback_status.txt
-              echo "rollback_tag=not_found" >> rollback_status.txt
+              echo "rollback_done=false" > /home/dockeruser/rollback_status.txt
+              echo "rollback_tag=not_found" >> /home/dockeruser/rollback_status.txt
               exit 1
             fi
           fi
@@ -103,7 +103,7 @@ jobs:
     - name: Download rollback status file
       run: |
           scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} \
-            dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/deploy/rollback_status.txt .
+            dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/rollback_status.txt .
 
     - name: Set rollback status
       id: rollback-status
