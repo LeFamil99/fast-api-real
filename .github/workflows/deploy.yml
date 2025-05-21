@@ -79,7 +79,7 @@ jobs:
 
           if curl -sf http://localhost:8000/healt; then
             echo "Healthcheck passed"
-            echo "rollback_done='false'" > /home/dockeruser/rollback_status.txt
+            echo "rollback_done=false" > /home/dockeruser/rollback_status.txt
           else
             echo "Healthcheck failed - starting rollback"
             if [ -f previous_tag.txt ]; then
@@ -90,11 +90,11 @@ jobs:
               docker compose up -d --remove-orphans
               
               echo "$TAG" > current_tag.txt
-              echo "rollback_done='true'" > /home/dockeruser/rollback_status.txt
+              echo "rollback_done=true" > /home/dockeruser/rollback_status.txt
               echo "rollback_tag=$TAG" >> /home/dockeruser/rollback_status.txt
             else
               echo "No previous tag available"
-              echo "rollback_done='false'" > /home/dockeruser/rollback_status.txt
+              echo "rollback_done=false" > /home/dockeruser/rollback_status.txt
               echo "rollback_tag=not_found" >> /home/dockeruser/rollback_status.txt
               exit 1
             fi
