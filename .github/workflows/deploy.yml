@@ -8,30 +8,45 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
-      - name: Configure SSH key
-        uses: webfactory/ssh-agent@v0.7.0
-        with: 
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Install SSH and rsync
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push all images
+        run: |
+          docker compose build
+          docker compose push
+
+      - name: Install rsync
         run: |
           sudo apt-get update
-          sudo apt-get install -y rsync openssh-client
+          sudo apt-get install -y rsync
+          
+      - name: Upload docker-compose.yml to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: dockeruser
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/dockeruser/deploy"
 
-      - name: Copy files to EC2
-        run: rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./ dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/deploy
-
-      - name: Deploy with Docker Compose
-        run: |
-          ssh -o StrictHostKeyChecking=no dockeruser@${{ secrets.EC2_HOST }} "
+      - name: Deploy with Docker Compose via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          username: dockeruser
+          host: ${{ secrets.EC2_HOST }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
             cd /home/dockeruser/deploy &&
-            docker compose up -d --build
-          "
+            docker compose pull &&
+            docker compose up -d
           
   slack-notification:
     needs: deploy
