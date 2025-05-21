@@ -68,7 +68,7 @@ jobs:
       uses: appleboy/ssh-action@v1.0.0
       with: 
         username: dockeruser
-        host: ${{ secrets.EC2_USER }}
+        host: ${{ secrets.EC2_HOST }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/dockeruser/deploy
