@@ -104,8 +104,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: dockeruser
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: /home/dockeruser/rollback_status.txt
-          target: ./rollback_status.txt
+          source: "/home/dockeruser/rollback_status.txt"
+          target: "rollback_status.txt"
 
     - name: Set rollback status
       id: rollback-status
