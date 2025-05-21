@@ -116,8 +116,8 @@ jobs:
             echo "Rollback done: $rollback_done"
             echo "Rollback tag: $rollback_tag"
             
-            echo "rollback_done=$rollback_done" >> $GITHUB_ENV
-            echo "rollback_tag=$rollback_tag" >> $GITHUB_ENV
+            echo "rollback_done=$rollback_done" >> $GITHUB_OUTPUT
+            echo "rollback_tag=$rollback_tag" >> $GITHUB_OUTPUT
           else
             echo "Rollback status file not found."
             exit 1
