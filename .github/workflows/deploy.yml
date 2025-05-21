@@ -99,7 +99,7 @@ jobs:
           fi
 
     - name: Download rollback status file
-      uses: appleboy/scp-action@0.1.7
+      uses: appleboy/scp-action@v0.1.7
       with:
           host: ${{ secrets.EC2_HOST }}
           username: dockeruser
