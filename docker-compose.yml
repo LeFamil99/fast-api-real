@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   app:
-    image: famil99/backend:latest
+    image: famil99/backend:${TAG}
     build:
       context: .
       dockerfile: Dockerfile.app
@@ -25,7 +25,7 @@ services:
       - db_data:/var/lib/postgresql/data
 
   db_init:
-    image: famil99/db-init:latest
+    image: famil99/db-init:${TAG}
     build:
       context: .
       dockerfile: Dockerfile.db_init
