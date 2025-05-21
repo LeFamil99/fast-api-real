@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-  
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -30,7 +30,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y rsync
-          
+
       - name: Upload docker-compose.yml to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -55,7 +55,7 @@ jobs:
               cp current_tag.txt previous_tag.txt
             fi
             echo "${TAG}" > current_tag.txt
-            
+
             docker compose pull
             docker compose up -d
 
@@ -66,14 +66,14 @@ jobs:
     steps:
     - name: Healthcheck and rollback on failure
       uses: appleboy/ssh-action@v1.0.0
-      with: 
+      with:
         username: dockeruser
         host: ${{ secrets.EC2_HOST }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           cd /home/dockeruser/deploy
 
-          if curl -sf http://localhost:8000/healt; then
+          if curl -sf http://localhost:8000/health; then
             echo "Healthcheck passed"
           else
             echo "Healthcheck failed - starting rollback"
@@ -88,7 +88,7 @@ jobs:
               exit 1
             fi
           fi
-          
+
   slack-notification:
     needs: deploy
     if: failure()
