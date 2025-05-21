@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-
-env:
-  TAG: ${{ github.sha }}
   
 jobs:
   deploy:
@@ -26,6 +23,8 @@ jobs:
         run: |
           docker compose build
           docker compose push
+        env:
+          TAG: ${{ github.sha }}
 
       - name: Install rsync
         run: |
@@ -51,13 +50,13 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           env: TAG=${{ env.TAG }}
           script: |
+            export TAG=${{ TAG }}
             cd /home/dockeruser/deploy
             if [ -f current_tag.txt ]; then
               cp current_tag.txt previous_tag.txt
             fi
             echo "${TAG}" > current_tag.txt
             
-            export TAG=${{ TAG }}
             docker compose pull
             docker compose up -d
 
