@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -22,6 +23,8 @@ jobs:
         run: |
           docker compose build
           docker compose push
+        env:
+          TAG: ${{ github.sha }}
 
       - name: Install rsync
         run: |
@@ -44,6 +47,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            export TAG=${{ github.sha }}
             cd /home/dockeruser/deploy &&
             docker compose pull &&
             docker compose up -d
