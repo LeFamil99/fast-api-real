@@ -102,8 +102,9 @@ jobs:
 
     - name: Download rollback status file
       run: |
-          scp -o StrictHostKeyChecking=no -i ${{ secrets.EC2_SSH_KEY }} \
-            dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/rollback_status.txt .
+        echo "${{ secrets.EC2_SSH_KEY }}" > /tmp/ec2_ssh_key && chmod 600 /tmp/ec2_ssh_key
+        scp -o StrictHostKeyChecking=no -i /tmp/ec2_ssh_key dockeruser@${{ secrets.EC2_HOST }}:/home/dockeruser/rollback_status.txt .
+        rm /tmp/ec2_ssh_key
 
     - name: Set rollback status
       id: rollback-status
