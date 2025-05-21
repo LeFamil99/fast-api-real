@@ -56,6 +56,36 @@ jobs:
             export TAG=${{ TAG }}
             docker compose pull
             docker compose up -d
+
+  healthcheck:
+    needs: deploy
+    runs-on: ubuntu:latest
+
+    steps:
+    - name: Healthcheck and rollback on failure
+      uses: appleboy/ssh-action@v1.0.0
+      with: 
+        username: dockeruser
+        host: ${{ secrets.EC2_USER }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd /home/dockeruser/deploy
+
+          if curl -sf http://localhost:8000/healt; then
+            echo "Healthcheck passed"
+          else
+            echo "Healthcheck failed - starting rollback
+            if [ -f previous_tag.txt ]; then
+              export TAG=$(cat previous_tag.txt)
+              echo "Rolling back to tag $TAG"
+              docker compose pull
+              docker compose up -d --remove-orphans
+              echo "$TAG" > current_tag.txt
+            else
+              echo "No previous tag available"
+              exit 1
+            fi
+          fi
           
   slack-notification:
     needs: deploy
