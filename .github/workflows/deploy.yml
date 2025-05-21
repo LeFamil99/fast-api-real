@@ -123,8 +123,6 @@ jobs:
             exit 1
           fi
         
-        
-
   slack-notification-health-failure:
     needs: healthcheck
     if: needs.healthcheck.outputs.rollback == 'true'
