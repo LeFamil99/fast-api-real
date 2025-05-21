@@ -10,54 +10,54 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push all images
-        run: |
-          docker compose build
-          docker compose push
-        env:
-          TAG: ${{ github.sha }}
+    - name: Build and push all images
+      run: |
+        docker compose build
+        docker compose push
+      env:
+        TAG: ${{ github.sha }}
 
-      - name: Install rsync
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rsync
+    - name: Install rsync
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y rsync
 
-      - name: Upload docker-compose.yml to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: dockeruser
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "docker-compose.yml"
-          target: "/home/dockeruser/deploy"
+    - name: Upload docker-compose.yml to EC2
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: dockeruser
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "docker-compose.yml"
+        target: "/home/dockeruser/deploy"
 
-      - name: Deploy with Docker Compose via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        env:
-          TAG: ${{ github.sha }}
-        with:
-          username: dockeruser
-          host: ${{ secrets.EC2_HOST }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            export TAG=${{ github.sha }}
-            cd /home/dockeruser/deploy
-            if [ -f current_tag.txt ]; then
-              cp current_tag.txt previous_tag.txt
-            fi
-            echo "${TAG}" > current_tag.txt
+    - name: Deploy with Docker Compose via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      env:
+        TAG: ${{ github.sha }}
+      with:
+        username: dockeruser
+        host: ${{ secrets.EC2_HOST }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          export TAG=${{ github.sha }}
+          cd /home/dockeruser/deploy
+          if [ -f current_tag.txt ]; then
+            cp current_tag.txt previous_tag.txt
+          fi
+          echo "${TAG}" > current_tag.txt
 
-            docker compose pull
-            docker compose up -d
+          docker compose pull
+          docker compose up -d
 
   healthcheck:
     needs: deploy
@@ -73,7 +73,7 @@ jobs:
         script: |
           cd /home/dockeruser/deploy
 
-          if curl -sf http://localhost:8000/health; then
+          if curl -sf http://localhost:8000/healt; then
             echo "Healthcheck passed"
           else
             echo "Healthcheck failed - starting rollback"
@@ -83,34 +83,64 @@ jobs:
               docker compose pull
               docker compose up -d --remove-orphans
               echo "$TAG" > current_tag.txt
+              echo "rollback_done=true" >> $GITHUB_ENV
             else
               echo "No previous tag available"
               exit 1
             fi
           fi
 
-  slack-notification:
-    needs: deploy
+  slack-notification-health-failure:
+    needs: healthcheck
+    if: needs.build-and-deploy.outputs.rollback == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Get Run details
+      id: run_details
+      run: |
+        echo "RUN_ID=${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
+        echo "RUN_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+        echo "REPOSITORY=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+
+    - name: Send Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_COLOR: 'warn'
+        SLACK_TITLE: 'Deployment healthcheck failure, rollback done'
+        SLACK_MESSAGE: |
+          The healthcheck on deployed version was not successful.  See details below:
+          *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
+          *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
+          *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
+          <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.run_details.outputs.RUN_ID }}|View Run>
+        SLACK_USERNAME: Github Actions
+        SLACK_ICON_EMOJI: ':github:'
+
+  slack-notification-failure:
+    needs: [deploy, healthcheck]
     if: failure()
     runs-on: ubuntu-latest
+
     steps:
-      - name: Get Run details
-        id: run_details
-        run: |
-          echo "RUN_ID=${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
-          echo "RUN_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
-          echo "REPOSITORY=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
-      - name: Send Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_COLOR: 'danger'  # Optional: Set color to red for failures
-          SLACK_TITLE: 'GitHub Actions Failure!'
-          SLACK_MESSAGE: |
-            The CI/CD pipeline failed.  See details below:
-            *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
-            *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
-            *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
-            <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.run_details.outputs.RUN_ID }}|View Run>
-          SLACK_USERNAME: Github Actions
-          SLACK_ICON_EMOJI: ':github:'
+    - name: Get Run details
+      id: run_details
+      run: |
+        echo "RUN_ID=${GITHUB_RUN_ID}" >> $GITHUB_OUTPUT
+        echo "RUN_NUMBER=${GITHUB_RUN_NUMBER}" >> $GITHUB_OUTPUT
+        echo "REPOSITORY=${GITHUB_REPOSITORY}" >> $GITHUB_OUTPUT
+    - name: Send Notification
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_COLOR: 'danger'
+        SLACK_TITLE: 'GitHub Actions Failure!'
+        SLACK_MESSAGE: |
+          The CI/CD pipeline failed.  See details below:
+          *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
+          *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
+          *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
+          <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ steps.run_details.outputs.RUN_ID }}|View Run>
+        SLACK_USERNAME: Github Actions
+        SLACK_ICON_EMOJI: ':github:'
