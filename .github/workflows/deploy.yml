@@ -62,9 +62,14 @@ jobs:
   healthcheck:
     needs: deploy
     runs-on: ubuntu-latest
+    outputs:
+      rollback: ${{ steps.healthcheck.outputs.rollback_done }}
+      rollback_tag: ${{ steps.healthcheck.outputs.rollback_tag }}
+      current_tag: ${{ github.sha }}
 
     steps:
     - name: Healthcheck and rollback on failure
+      id: healthcheck
       uses: appleboy/ssh-action@v1.0.0
       with:
         username: dockeruser
@@ -84,6 +89,7 @@ jobs:
               docker compose up -d --remove-orphans
               echo "$TAG" > current_tag.txt
               echo "rollback_done=true" >> $GITHUB_ENV
+              echo "rollback_tag=$TAG" >> $GITHUB_ENV
             else
               echo "No previous tag available"
               exit 1
@@ -111,6 +117,8 @@ jobs:
         SLACK_TITLE: 'Deployment healthcheck failure, rollback done'
         SLACK_MESSAGE: |
           The healthcheck on deployed version was not successful.  See details below:
+          *Current image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKER_HOST }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.rollback_tag }}|View Docker image>
+          *Invalid image version:* <https://hub.docker.com/repository/docker/${{ secrets.DOCKER_HOST }}/backend/image-management?q=tag%3A${{ needs.healthcheck.outputs.current_tag }}|View Docker image>
           *Repository:* ${{ steps.run_details.outputs.REPOSITORY }}
           *Workflow Run ID:* ${{ steps.run_details.outputs.RUN_ID }}
           *Workflow Run Number:* ${{ steps.run_details.outputs.RUN_NUMBER }}
