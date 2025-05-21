@@ -76,7 +76,7 @@ jobs:
           if curl -sf http://localhost:8000/healt; then
             echo "Healthcheck passed"
           else
-            echo "Healthcheck failed - starting rollback
+            echo "Healthcheck failed - starting rollback"
             if [ -f previous_tag.txt ]; then
               export TAG=$(cat previous_tag.txt)
               echo "Rolling back to tag $TAG"
