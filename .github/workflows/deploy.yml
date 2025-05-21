@@ -47,6 +47,7 @@ jobs:
           username: dockeruser
           host: ${{ secrets.EC2_HOST }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          env: TAG=${{ env.TAG }}
           script: |
             cd /home/dockeruser/deploy
             if [ -f current_tag.txt ]; then
