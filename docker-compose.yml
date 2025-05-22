@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   app:
-    image: famil99/backend:${TAG}
+    image: maximetest/backend:${TAG}
     build:
       context: .
       dockerfile: Dockerfile.app
@@ -12,7 +12,7 @@ services:
       - db_init
     environment:
       DATABASE_URL: "postgresql://admin:admin@db:5432/testdb"
- 
+
   db:
     image: postgres:14
     ports:
@@ -25,7 +25,7 @@ services:
       - db_data:/var/lib/postgresql/data
 
   db_init:
-    image: famil99/db-init:${TAG}
+    image: maximetest/db-init:${TAG}
     build:
       context: .
       dockerfile: Dockerfile.db_init
