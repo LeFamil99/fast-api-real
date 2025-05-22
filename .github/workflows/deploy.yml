@@ -21,18 +21,13 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    - name: Docker Login to ACR
-      env:
-        ACR_NAME: maximetest
-      run: |
-        docker login "$ACR_NAME.azurecr.io" -u 00000000-0000-0000-0000-000000000000 -p ${{ secrets.AZURE_CLIENT_SECRET }}
-
     - name: Build and push all images
       run: |
         docker compose build
         docker compose push
       env:
         TAG: ${{ github.sha }}
+        DOCKER_CONFIG: ${{ github.workspace }}/.docker
 
     - name: Install rsync
       run: |
